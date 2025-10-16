@@ -4,12 +4,18 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+
 public class Conexao {
-    private static final String URL = "jdbc:mysql://localhost:3306/delivery_system?useSSL=false&serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/delivery_system";
     private static final String USER = "root";     // altere se necessário
-    private static final String PASS = "root";     // altere se necessário
+    private static final String PASS = "201005Jv?";     // altere se necessário
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASS);
+        try {
+            return DriverManager.getConnection(URL, USER, PASS);
+        }
+        catch (SQLException e) {
+            throw new SQLException("Erro ao conectar ao banco de dados: " + e.getMessage());
+        }
     }
 }
