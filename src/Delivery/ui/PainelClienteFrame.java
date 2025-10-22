@@ -7,9 +7,9 @@ import Delivery.dao.RestauranteDAO;
 import Delivery.modelo.Cliente;
 import Delivery.modelo.Pedido;
 import Delivery.modelo.Restaurante;
+import Delivery.ui.tabelas.ModeloTabelaNaoEditavel;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.SQLException;
 import java.util.List;
@@ -56,7 +56,7 @@ public class PainelClienteFrame extends JFrame {
     private JPanel montarTabRestaurantes() {
         JPanel p = new JPanel(new BorderLayout(8,8));
         p.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
-        tabelaRest.setModel(new DefaultTableModel(new Object[]{"ID","Nome","Tipo","Telefone","Endereço"}, 0));
+        tabelaRest.setModel(new ModeloTabelaNaoEditavel(new Object[]{"ID","Nome","Tipo","Telefone","Endereço"}, 0));
         p.add(new JScrollPane(tabelaRest), BorderLayout.CENTER);
 
         JButton novoPedido = new JButton("Fazer Pedido...");
@@ -70,7 +70,7 @@ public class PainelClienteFrame extends JFrame {
     private JPanel montarTabPedidos() {
         JPanel p = new JPanel(new BorderLayout(8,8));
         p.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
-        tabelaPedidos.setModel(new DefaultTableModel(new Object[]{"ID","Restaurante","Status","Total","Data/Hora"}, 0));
+        tabelaPedidos.setModel(new ModeloTabelaNaoEditavel(new Object[]{"ID","Restaurante","Status","Total","Data/Hora"}, 0));
         p.add(new JScrollPane(tabelaPedidos), BorderLayout.CENTER);
 
         JButton atualizar = new JButton("Atualizar");
@@ -83,7 +83,7 @@ public class PainelClienteFrame extends JFrame {
 
     private void carregarRestaurantes() {
         try {
-            DefaultTableModel m = (DefaultTableModel) tabelaRest.getModel();
+            ModeloTabelaNaoEditavel m = (ModeloTabelaNaoEditavel) tabelaRest.getModel();
             m.setRowCount(0);
             List<Restaurante> lista = restauranteDAO.listar();
             for (Restaurante r : lista) {
@@ -94,7 +94,7 @@ public class PainelClienteFrame extends JFrame {
 
     private void carregarPedidos() {
         try {
-            DefaultTableModel m = (DefaultTableModel) tabelaPedidos.getModel();
+            ModeloTabelaNaoEditavel m = (ModeloTabelaNaoEditavel) tabelaPedidos.getModel();
             m.setRowCount(0);
             List<Pedido> lista = pedidoDAO.listarPorCliente(cliente.getIdCliente());
             for (Pedido p : lista) {
