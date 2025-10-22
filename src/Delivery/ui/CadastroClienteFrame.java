@@ -6,6 +6,7 @@ import Delivery.modelo.Cliente;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 public class CadastroClienteFrame extends JFrame {
     private final ClienteDAO clienteDAO = new ClienteDAO();
@@ -53,16 +54,93 @@ public class CadastroClienteFrame extends JFrame {
 
         salvar.addActionListener(evt -> {
             try {
-                Cliente cli = new Cliente(null, nome.getText(), tel.getText(), end.getText(),
-                        email.getText(), new String(senha.getPassword()), cpf.getText());
+                validarCampos(tel.getText(), end.getText(), email.getText(), new String(senha.getPassword()), cpf.getText());
+
+                Cliente cli = new Cliente(
+                        null,
+                        nome.getText().trim(),
+                        tel.getText().trim(),
+                        end.getText().trim(),
+                        email.getText().trim(),
+                        new String(senha.getPassword()),
+                        cpf.getText().trim()
+                );
+
                 cli = clienteDAO.inserir(cli);
-                JOptionPane.showMessageDialog(this, "Cadastrado! ID: " + cli.getIdCliente());
+                JOptionPane.showMessageDialog(this, "Cadastrado com sucesso!\nID: " + cli.getIdCliente());
                 dispose();
+            } catch (IllegalArgumentException e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Validação", JOptionPane.WARNING_MESSAGE);
             } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Erro no Banco", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Erro inesperado: " + e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
             }
         });
 
         setContentPane(p);
+    }
+
+    private void validarCampos(String telefone, String endereco, String email, String senha, String cpf) {
+        // Telefone
+        if (telefone == null || telefone.trim().isEmpty())
+            throw new IllegalArgumentException("O telefone não pode ser vazio.");
+        if (telefone.replaceAll("\\D", "").length() < 11)
+            throw new IllegalArgumentException("O telefone deve conter pelo menos 11 dígitos (DDD + número).");
+
+        // Endereço
+        if (endereco == null || endereco.trim().isEmpty())
+            throw new IllegalArgumentException("O endereço não pode ser vazio.");
+
+        // Email
+        if (email == null || email.trim().isEmpty())
+            throw new IllegalArgumentException("O e-mail não pode ser vazio.");
+        String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        if (!Pattern.matches(emailRegex, email))
+            throw new IllegalArgumentException("E-mail inválido. Use o formato: exemplo@dominio.com");
+
+        // Senha
+        if (senha == null || senha.trim().isEmpty())
+            throw new IllegalArgumentException("A senha não pode ser vazia.");
+        if (senha.length() < 8)
+            throw new IllegalArgumentException("A senha deve ter pelo menos 8 caracteres.");
+        if (!senha.matches(".*[A-Z].*") || !senha.matches(".*[a-z].*")) {
+            throw new IllegalArgumentException("""
+                    A senha deve conter:
+                    • Pelo menos uma letra maiúscula
+                    • Pelo menos uma letra minúscula
+                    • Mínimo de 8 caracteres
+                    """);
+        }
+
+        // CPF
+        if (!isCPFValido(cpf))
+            throw new IllegalArgumentException("CPF inválido.");
+    }
+
+    private boolean isCPFValido(String cpf) {
+        if (cpf == null) return false;
+        cpf = cpf.replaceAll("\\D", "");
+
+        if (cpf.length() != 11 || cpf.matches("(\\d)\\1{10}")) return false;
+
+        try {
+            int soma = 0, resto;
+            for (int i = 1; i <= 9; i++)
+                soma += Integer.parseInt(cpf.substring(i - 1, i)) * (11 - i);
+            resto = (soma * 10) % 11;
+            if ((resto == 10) || (resto == 11)) resto = 0;
+            if (resto != Integer.parseInt(cpf.substring(9, 10))) return false;
+
+            soma = 0;
+            for (int i = 1; i <= 10; i++)
+                soma += Integer.parseInt(cpf.substring(i - 1, i)) * (12 - i);
+            resto = (soma * 10) % 11;
+            if ((resto == 10) || (resto == 11)) resto = 0;
+
+            return resto == Integer.parseInt(cpf.substring(10, 11));
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }
