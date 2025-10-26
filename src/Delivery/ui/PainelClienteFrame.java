@@ -12,6 +12,7 @@ import Delivery.ui.tabelas.ModeloTabelaNaoEditavel;
 import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PainelClienteFrame extends JFrame {
@@ -23,6 +24,9 @@ public class PainelClienteFrame extends JFrame {
 
     private final JTable tabelaRest = new JTable();
     private final JTable tabelaPedidos = new JTable();
+
+    // Mantém o mapeamento da linha -> objeto Restaurante (para pegar o ID sem exibir)
+    private List<Restaurante> restaurantesCarregados = new ArrayList<>();
 
     public PainelClienteFrame(Cliente cliente) {
         super("Cliente - " + cliente.getNome());
@@ -56,7 +60,11 @@ public class PainelClienteFrame extends JFrame {
     private JPanel montarTabRestaurantes() {
         JPanel p = new JPanel(new BorderLayout(8,8));
         p.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
-        tabelaRest.setModel(new ModeloTabelaNaoEditavel(new Object[]{"ID","Nome","Tipo","Telefone","Endereço"}, 0));
+
+        // Sem coluna de ID visível
+        tabelaRest.setModel(new ModeloTabelaNaoEditavel(
+                new Object[]{"Nome","Tipo","Telefone","Endereço"}, 0
+        ));
         p.add(new JScrollPane(tabelaRest), BorderLayout.CENTER);
 
         JButton novoPedido = new JButton("Fazer Pedido...");
@@ -70,7 +78,11 @@ public class PainelClienteFrame extends JFrame {
     private JPanel montarTabPedidos() {
         JPanel p = new JPanel(new BorderLayout(8,8));
         p.setBorder(BorderFactory.createEmptyBorder(8,8,8,8));
-        tabelaPedidos.setModel(new ModeloTabelaNaoEditavel(new Object[]{"ID","Restaurante","Status","Total","Data/Hora"}, 0));
+
+        // Sem IDs: mostra nome do restaurante
+        tabelaPedidos.setModel(new ModeloTabelaNaoEditavel(
+                new Object[]{"Restaurante","Status","Total","Data/Hora"}, 0
+        ));
         p.add(new JScrollPane(tabelaPedidos), BorderLayout.CENTER);
 
         JButton atualizar = new JButton("Atualizar");
@@ -83,22 +95,27 @@ public class PainelClienteFrame extends JFrame {
 
     private void carregarRestaurantes() {
         try {
-            ModeloTabelaNaoEditavel m = (ModeloTabelaNaoEditavel) tabelaRest.getModel();
+            restaurantesCarregados = restauranteDAO.listar(); // guarda para mapear seleção -> id
+            var m = (ModeloTabelaNaoEditavel) tabelaRest.getModel();
             m.setRowCount(0);
-            List<Restaurante> lista = restauranteDAO.listar();
-            for (Restaurante r : lista) {
-                m.addRow(new Object[]{r.getIdRestaurante(), r.getNome(), r.getTipoCozinha(), r.getTelefone(), r.getEndereco()});
+            for (Restaurante r : restaurantesCarregados) {
+                m.addRow(new Object[]{ r.getNome(), r.getTipoCozinha(), r.getTelefone(), r.getEndereco() });
             }
         } catch (SQLException e) { showError(e); }
     }
 
     private void carregarPedidos() {
         try {
-            ModeloTabelaNaoEditavel m = (ModeloTabelaNaoEditavel) tabelaPedidos.getModel();
+            var m = (ModeloTabelaNaoEditavel) tabelaPedidos.getModel();
             m.setRowCount(0);
             List<Pedido> lista = pedidoDAO.listarPorCliente(cliente.getIdCliente());
             for (Pedido p : lista) {
-                m.addRow(new Object[]{p.getIdPedido(), p.getIdRestaurante(), p.getStatus(), p.getValorTotal(), p.getDataHora()});
+                // Buscar o nome do restaurante correspondente
+                Restaurante rest = restauranteDAO.buscarPorId(p.getIdRestaurante());
+                String nomeRest = (rest != null) ? rest.getNome() : "(Desconhecido)";
+
+                // Adiciona linha sem IDs
+                m.addRow(new Object[]{ nomeRest, p.getStatus(), p.getValorTotal(), p.getDataHora() });
             }
         } catch (SQLException e) { showError(e); }
     }
@@ -106,8 +123,18 @@ public class PainelClienteFrame extends JFrame {
     private void abrirDialogPedido() {
         int row = tabelaRest.getSelectedRow();
         if (row < 0) { JOptionPane.showMessageDialog(this, "Selecione um restaurante."); return; }
-        int idRest = (int) tabelaRest.getValueAt(row, 0);
-        new PedidoDialog(this, cliente.getIdCliente(), idRest, pedidoDAO, itemDAO, this::carregarPedidos).setVisible(true);
+
+        // Recupera o ID através da lista mapeada (sem exibir ID na tabela)
+        int idRest = restaurantesCarregados.get(row).getIdRestaurante();
+
+        new PedidoDialog(
+                this,
+                cliente.getIdCliente(),
+                idRest,
+                pedidoDAO,
+                itemDAO,
+                this::carregarPedidos // callback: atualiza a aba "Meus Pedidos" ao finalizar
+        ).setVisible(true);
     }
 
     private void showError(Exception e) {

@@ -8,7 +8,8 @@ public class Cliente extends Usuario {
     private String cpf;
 
     public Cliente() {}
-    public Cliente(Integer idCliente, String nome, String telefone, String endereco, String email, String senha, String cpf) {
+    public Cliente(Integer idCliente, String nome, String telefone, String endereco,
+                   String email, String senha, String cpf) {
         super(email, senha);
         this.idCliente = idCliente;
         this.nome = nome;

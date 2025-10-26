@@ -8,6 +8,7 @@ public class Admin extends Usuario {
         super(email, senha);
         this.idAdmin = idAdmin;
     }
+
     public Integer getIdAdmin() { return idAdmin; }
     public void setIdAdmin(Integer idAdmin) { this.idAdmin = idAdmin; }
 }
