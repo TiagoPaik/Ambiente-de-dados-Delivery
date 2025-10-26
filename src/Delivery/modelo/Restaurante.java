@@ -8,8 +8,10 @@ public class Restaurante {
     private String endereco;
 
     public Restaurante() {}
-    public Restaurante(Integer id, String nome, String tipoCozinha, String telefone, String endereco) {
-        this.idRestaurante = id;
+
+    // Construtor usado no seu código: new Restaurante(null, nome, tipo, tel, end)
+    public Restaurante(Integer idRestaurante, String nome, String tipoCozinha, String telefone, String endereco) {
+        this.idRestaurante = idRestaurante;
         this.nome = nome;
         this.tipoCozinha = tipoCozinha;
         this.telefone = telefone;
