@@ -46,6 +46,9 @@ public class ItemPedidoDAO {
     }
 
     public ItemPedido inserir(ItemPedido it) throws SQLException {
+        // ===== Validação antes de inserir =====
+        validarCamposObrigatorios(it);
+
         String sql = """
             INSERT INTO ItemPedido (id_restaurante, descricao, quantidade, preco, observacao, estoque)
             VALUES (?,?,?,?,?,?)
@@ -54,10 +57,10 @@ public class ItemPedidoDAO {
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, it.getIdRestaurante());
             ps.setString(2, it.getDescricao());
-            ps.setInt(3, it.getQuantidade() == null ? 1 : it.getQuantidade());
+            ps.setInt(3, it.getQuantidade());
             ps.setBigDecimal(4, it.getPreco());
             ps.setString(5, it.getObservacao());
-            ps.setInt(6, it.getEstoque() == null ? 0 : it.getEstoque());
+            ps.setInt(6, it.getEstoque());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) it.setIdItem(rs.getInt(1));
@@ -67,6 +70,9 @@ public class ItemPedidoDAO {
     }
 
     public void atualizar(ItemPedido it) throws SQLException {
+        // ===== Validação antes de atualizar =====
+        validarCamposObrigatorios(it);
+
         String sql = """
             UPDATE ItemPedido
                SET descricao=?, quantidade=?, preco=?, observacao=?, estoque=?
@@ -75,10 +81,10 @@ public class ItemPedidoDAO {
         try (Connection c = ConnectionFactory.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, it.getDescricao());
-            ps.setInt(2, it.getQuantidade() == null ? 1 : it.getQuantidade());
+            ps.setInt(2, it.getQuantidade());
             ps.setBigDecimal(3, it.getPreco());
             ps.setString(4, it.getObservacao());
-            ps.setInt(5, it.getEstoque() == null ? 0 : it.getEstoque());
+            ps.setInt(5, it.getEstoque());
             ps.setInt(6, it.getIdItem());
             ps.executeUpdate();
         }
@@ -105,8 +111,6 @@ public class ItemPedidoDAO {
     }
 
     // ===== Verificação & baixa para a venda =====
-
-    // Retorna mensagem de faltas se algum item não tem estoque suficiente; null se tudo ok
     public String verificarDisponibilidade(List<PedidoDialog.LinhaPedido> linhas) throws SQLException {
         if (linhas == null || linhas.isEmpty()) return "Carrinho vazio";
         String inSql = String.join(",", Collections.nCopies(linhas.size(), "?"));
@@ -138,7 +142,6 @@ public class ItemPedidoDAO {
         return faltas.length() > 0 ? faltas.toString() : null;
     }
 
-    // Executa a baixa garantindo estoque >= qtd para cada item (DENTRO de uma transação já aberta)
     public boolean baixarEstoqueEmLote(Connection c, List<PedidoDialog.LinhaPedido> linhas) throws SQLException {
         String sql = "UPDATE ItemPedido SET estoque = estoque - ? WHERE id_item = ? AND estoque >= ?";
         try (PreparedStatement ps = c.prepareStatement(sql)) {
@@ -150,6 +153,22 @@ public class ItemPedidoDAO {
                 if (ok == 0) return false; // sem estoque suficiente
             }
             return true;
+        }
+    }
+
+    // ===== Validação de campos obrigatórios =====
+    private void validarCamposObrigatorios(ItemPedido it) throws SQLException {
+        if (it.getDescricao() == null || it.getDescricao().trim().isEmpty()) {
+            throw new SQLException("O campo Descrição não pode ficar em branco.");
+        }
+        if (it.getQuantidade() == null || it.getQuantidade() <= 0) {
+            throw new SQLException("O campo Quantidade deve ser maior que zero.");
+        }
+        if (it.getPreco() == null || it.getPreco().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new SQLException("O campo Preço deve ser maior que zero.");
+        }
+        if (it.getEstoque() == null || it.getEstoque() < 0) {
+            throw new SQLException("O campo Estoque não pode ser negativo ou vazio.");
         }
     }
 
