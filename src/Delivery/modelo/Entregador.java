@@ -7,6 +7,7 @@ public class Entregador {
     private String veiculo;
 
     public Entregador() {}
+
     public Entregador(Integer id, String nome, String status, String veiculo) {
         this.idEntregador = id;
         this.nome = nome;
@@ -16,10 +17,19 @@ public class Entregador {
 
     public Integer getIdEntregador() { return idEntregador; }
     public void setIdEntregador(Integer idEntregador) { this.idEntregador = idEntregador; }
+
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
     public String getVeiculo() { return veiculo; }
     public void setVeiculo(String veiculo) { this.veiculo = veiculo; }
+
+    // ✅ Exibir nome ao invés do endereço do objeto
+    @Override
+    public String toString() {
+        return nome != null ? nome : "Sem nome";
+    }
 }

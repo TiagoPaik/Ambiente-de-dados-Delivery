@@ -114,14 +114,19 @@ public class PedidoDAO {
                                       List<Delivery.ui.PedidoDialog.LinhaPedido> linhas,
                                       BigDecimal total,
                                       ItemPedidoDAO itemDAO) throws SQLException {
+        // 🚨 Verificação inicial — impede criar pedido sem itens
+        if (linhas == null || linhas.isEmpty()) {
+            throw new SQLException("Não é possível criar um pedido sem itens.");
+        }
+
         String sqlPedido = """
-            INSERT INTO Pedido (id_cliente, id_restaurante, id_entregador, data_hora, status, valor_total)
-            VALUES (?, ?, NULL, NOW(), 'pendente', ?)
-        """;
+        INSERT INTO Pedido (id_cliente, id_restaurante, id_entregador, data_hora, status, valor_total)
+        VALUES (?, ?, NULL, NOW(), 'pendente', ?)
+    """;
         String sqlItens = """
-            INSERT INTO pedido_itens (id_pedido, id_item, descricao, preco_unit, quantidade, subtotal)
-            VALUES (?,?,?,?,?,?)
-        """;
+        INSERT INTO pedido_itens (id_pedido, id_item, descricao, preco_unit, quantidade, subtotal)
+        VALUES (?,?,?,?,?,?)
+    """;
 
         try (Connection c = ConnectionFactory.getConnection()) {
             boolean oldAuto = c.getAutoCommit();
@@ -178,6 +183,7 @@ public class PedidoDAO {
             }
         }
     }
+
 
     // ===== Mapper =====
     private Pedido map(ResultSet rs) throws SQLException {

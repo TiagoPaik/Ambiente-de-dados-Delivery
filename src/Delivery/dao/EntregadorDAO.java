@@ -32,6 +32,14 @@ public class EntregadorDAO {
     }
 
     public Entregador inserir(Entregador e) throws SQLException {
+        // === Validação antes de inserir ===
+        if (e.getNome() == null || e.getNome().trim().isEmpty()) {
+            throw new SQLException("O campo Nome não pode ficar em branco.");
+        }
+        if (e.getVeiculo() == null || e.getVeiculo().trim().isEmpty()) {
+            throw new SQLException("O campo Veículo não pode ficar em branco.");
+        }
+
         String sql = "INSERT INTO Entregador (nome, status, veiculo) VALUES (?,?,?)";
         try (Connection c = ConnectionFactory.getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -47,6 +55,14 @@ public class EntregadorDAO {
     }
 
     public void atualizar(Entregador e) throws SQLException {
+        // === Validação antes de atualizar ===
+        if (e.getNome() == null || e.getNome().trim().isEmpty()) {
+            throw new SQLException("O campo Nome não pode ficar em branco.");
+        }
+        if (e.getVeiculo() == null || e.getVeiculo().trim().isEmpty()) {
+            throw new SQLException("O campo Veículo não pode ficar em branco.");
+        }
+
         String sql = "UPDATE Entregador SET nome=?, status=?, veiculo=? WHERE id_entregador = ?";
         try (Connection c = ConnectionFactory.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {

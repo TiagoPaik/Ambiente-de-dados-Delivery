@@ -3,6 +3,7 @@ package Delivery.dao;
 import Delivery.modelo.Restaurante;
 import util.ConnectionFactory;
 
+import javax.swing.JOptionPane;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +35,20 @@ public class RestauranteDAO {
     }
 
     public Restaurante inserir(Restaurante r) throws SQLException {
-        String sql = "INSERT INTO Restaurante (nome, tipo_cozinha, telefone, endereco) " +
-                "VALUES (?,?,?,?)";
+        // 🔹 Validação com popup
+        if (r.getNome() == null || r.getNome().isBlank() ||
+                r.getTipoCozinha() == null || r.getTipoCozinha().isBlank() ||
+                r.getTelefone() == null || r.getTelefone().isBlank() ||
+                r.getEndereco() == null || r.getEndereco().isBlank()) {
+
+            JOptionPane.showMessageDialog(null,
+                    "Todos os campos devem ser preenchidos antes de inserir o restaurante.",
+                    "Erro de Validação",
+                    JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+
+        String sql = "INSERT INTO Restaurante (nome, tipo_cozinha, telefone, endereco) VALUES (?,?,?,?)";
         try (Connection c = ConnectionFactory.getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, r.getNome());
@@ -47,12 +60,30 @@ public class RestauranteDAO {
                 if (rs.next()) r.setIdRestaurante(rs.getInt(1));
             }
         }
+
+        JOptionPane.showMessageDialog(null,
+                "Restaurante cadastrado com sucesso!",
+                "Sucesso",
+                JOptionPane.INFORMATION_MESSAGE);
+
         return r;
     }
 
     public void atualizar(Restaurante r) throws SQLException {
-        String sql = "UPDATE Restaurante SET nome=?, tipo_cozinha=?, telefone=?, endereco=? " +
-                "WHERE id_restaurante = ?";
+        // 🔹 Validação com popup
+        if (r.getNome() == null || r.getNome().isBlank() ||
+                r.getTipoCozinha() == null || r.getTipoCozinha().isBlank() ||
+                r.getTelefone() == null || r.getTelefone().isBlank() ||
+                r.getEndereco() == null || r.getEndereco().isBlank()) {
+
+            JOptionPane.showMessageDialog(null,
+                    "Todos os campos devem ser preenchidos antes de atualizar o restaurante.",
+                    "Erro de Validação",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String sql = "UPDATE Restaurante SET nome=?, tipo_cozinha=?, telefone=?, endereco=? WHERE id_restaurante=?";
         try (Connection c = ConnectionFactory.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
             ps.setString(1, r.getNome());
@@ -62,6 +93,11 @@ public class RestauranteDAO {
             ps.setInt(5, r.getIdRestaurante());
             ps.executeUpdate();
         }
+
+        JOptionPane.showMessageDialog(null,
+                "Restaurante atualizado com sucesso!",
+                "Sucesso",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     public void excluir(int id) throws SQLException {
@@ -71,6 +107,11 @@ public class RestauranteDAO {
             ps.setInt(1, id);
             ps.executeUpdate();
         }
+
+        JOptionPane.showMessageDialog(null,
+                "Restaurante excluído com sucesso!",
+                "Sucesso",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private Restaurante map(ResultSet rs) throws SQLException {
